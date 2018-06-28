@@ -1,6 +1,7 @@
 package com.techelevator.projects.model;
 
 import java.math.BigDecimal;
+import java.util.TreeMap;
 
 public class Campground {
 	
@@ -58,5 +59,43 @@ public class Campground {
 	
 	public void setDailyFee(BigDecimal dailyFee) {
 		this.dailyFee = dailyFee;
+	}
+	
+	@Override
+	public String toString() {
+		return String.format("%1$-20s %2$-15s %3$-15s %4$-15s" , this.getName() , this.numberMonthToMonthName(Integer.parseInt(this.getOpenFromMm())) , 
+															    this.numberMonthToMonthName(Integer.parseInt(this.getOpenToMm())), "$" + this.getDailyFee() + "0");
+	}
+	
+	public String numberMonthToMonthName(int monthNum) {
+		switch (monthNum) {
+			case 1:
+				return "January";
+			case 2:
+				return "February";
+			case 3:
+				return "March";
+			case 4:
+				return "April";
+			case 5:
+				return "May";
+			case 6:
+				return "June";
+			case 7:
+				return "July";
+			case 8:
+				return "August";
+			case 9:
+				return "September";
+			case 10:
+				return "October";
+			case 11:
+				return "November";
+			case 12:
+				return "December";
+			default:
+				break;
+		}
+		return null;
 	}
 }

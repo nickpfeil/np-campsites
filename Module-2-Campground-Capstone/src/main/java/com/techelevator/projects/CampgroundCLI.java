@@ -21,6 +21,7 @@ public class CampgroundCLI {
 	
 	private TreeMap<Integer, Park> parksMap = new TreeMap<Integer, Park>();
 	private TreeMap<Integer, Campground> campgroundsMap = new TreeMap<Integer, Campground>();
+	private TreeMap<Integer, Reservation> reservationsMap = new TreeMap<Integer, Reservation>();
 
 	Scanner userInput = new Scanner(System.in);
 	
@@ -67,6 +68,7 @@ public class CampgroundCLI {
 	private void campgroundsMenu(Park currPark) {
 		campgroundsMap = campgroundDAO.getAllCampgrounds(currPark);
 		campgroundDAO.getAllCampgrounds(currPark);
+		String campgroundHeading = String.format("%1$-23s %2$-15s %3$-15s %4$-15s", "   Name", "Open", "Close", "Daily Fee");
 		
 		while(true) {
 			System.out.println();
@@ -74,12 +76,11 @@ public class CampgroundCLI {
 			System.out.println(currPark.getName() + " National Park Campgrounds");
 			System.out.println("--------------------------------------------\n");
 			if(campgroundsMap.size() > 0) {
-				System.out.println("\tName\t\tOpen\t\tClose\t\tDaily Fee");
+				System.out.println(campgroundHeading);
 			}
 			for(int i = 1; i <= campgroundsMap.size(); ++i) {
-				System.out.println("#" + i +"\t" + campgroundsMap.get(i).getName() + "\t" +
-								   campgroundsMap.get(i).getOpenFromMm() + "\t" + campgroundsMap.get(i).getOpenToMm() +
-								   "\t$" + campgroundsMap.get(i).getDailyFee());
+				System.out.print("#" + i + " ");
+				System.out.println(campgroundsMap.get(i).toString());
 			}
 			
 			System.out.println("\n1) Search for Available Reservation");
@@ -90,11 +91,15 @@ public class CampgroundCLI {
 			if (userChoice.equals("2")) {
 				return;
 			} else  if (userChoice.equals("1")) {
-				// get available reservations
+				searchAvailableReservations();
 			} else {
 				System.out.println("Not Valid Input\n");
 			}
 		}
+	}
+	
+	private void searchAvailableReservations() {
+//		reservationsMap = reservationDAO.getAvailableReservations(currCampground);
 	}
 	
 	private void handleParks() {

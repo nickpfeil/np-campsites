@@ -1,5 +1,7 @@
 package com.techelevator.projects.model;
 
-public interface ReservationDAO {
+import java.util.TreeMap;
 
+public interface ReservationDAO {
+	public TreeMap<Integer, Reservation> getAvailableReservations(Campground currCampground);
 }

@@ -34,12 +34,6 @@ public class JDBCParkDAO implements ParkDAO {
 
 		return parksMap;
 	}
-
-	@Override
-	public void viewAllCampgrounds(Park currPark) {
-		// TODO Auto-generated method stub
-		
-	}
 	
 	private Park mapRowToPark(SqlRowSet results) {
 		Park newPark = new Park();
@@ -51,5 +45,5 @@ public class JDBCParkDAO implements ParkDAO {
 		newPark.setVisitors(results.getInt("visitors"));
 		newPark.setDescription(results.getString("description"));
 		return newPark;
-		}
+	}
 }

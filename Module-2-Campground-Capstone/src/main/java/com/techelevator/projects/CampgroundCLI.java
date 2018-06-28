@@ -20,6 +20,7 @@ import com.techelevator.projects.view.Menu;
 public class CampgroundCLI {
 	
 	private TreeMap<Integer, Park> parksMap = new TreeMap<Integer, Park>();
+	private TreeMap<Integer, Campground> campgroundsMap = new TreeMap<Integer, Campground>();
 
 	Scanner userInput = new Scanner(System.in);
 	
@@ -63,8 +64,37 @@ public class CampgroundCLI {
 		handleParks();
 	}
 	
-	private void campgroundMenu() {
+	private void campgroundsMenu(Park currPark) {
+		campgroundsMap = campgroundDAO.getAllCampgrounds(currPark);
+		campgroundDAO.getAllCampgrounds(currPark);
 		
+		while(true) {
+			System.out.println();
+			System.out.println("*** Park Campgrounds ***\n");
+			System.out.println(currPark.getName() + " National Park Campgrounds");
+			System.out.println("--------------------------------------------\n");
+			if(campgroundsMap.size() > 0) {
+				System.out.println("\tName\t\tOpen\t\tClose\t\tDaily Fee");
+			}
+			for(int i = 1; i <= campgroundsMap.size(); ++i) {
+				System.out.println("#" + i +"\t" + campgroundsMap.get(i).getName() + "\t" +
+								   campgroundsMap.get(i).getOpenFromMm() + "\t" + campgroundsMap.get(i).getOpenToMm() +
+								   "\t$" + campgroundsMap.get(i).getDailyFee());
+			}
+			
+			System.out.println("\n1) Search for Available Reservation");
+			System.out.println("2) Return to Previous Screen");
+			System.out.print("\nSelect a Command: ");
+			String userChoice = userInput.next();
+
+			if (userChoice.equals("2")) {
+				return;
+			} else  if (userChoice.equals("1")) {
+				// get available reservations
+			} else {
+				System.out.println("Not Valid Input\n");
+			}
+		}
 	}
 	
 	private void handleParks() {
@@ -123,7 +153,7 @@ public class CampgroundCLI {
 			String choice = (String) menu.getChoiceFromOptions(CAMPGROUND_MENU_OPTIONS); // with [] of options
 
 			if (choice.equals(CAMPGROUND_MENU_OPTION_VIEW)) {
-				// view campground info
+				campgroundsMenu(userChoice);
 			} else if (choice.equals(CAMPGROUND_MENU_OPTION_SEARCH_RESERVATION)) {
 				// search reservations
 			} else if (choice.equals(CAMPGROUND_OPTION_RETURN_TO_MAIN)) {

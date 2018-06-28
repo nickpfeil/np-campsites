@@ -6,6 +6,4 @@ public interface ParkDAO {
 
 	public TreeMap<Integer, Park> getAllParks();
 	
-	public void viewAllCampgrounds(Park currPark);
-	
 }

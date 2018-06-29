@@ -22,16 +22,12 @@ public class JDBCReservationDAO implements ReservationDAO {
 		this.jdbcTemplate = new JdbcTemplate(dataSource);
 	}
 	
-	public TreeMap<Integer, Reservation> searchAllReservations(Campground currCampground, String fromDate, String toDate) {
+	public TreeMap<Integer, Reservation> searchAllReservations(int reservationId) {
 		TreeMap<Integer, Reservation> reservationsMap = new TreeMap<Integer, Reservation>();
 		String sqlReturnAllReservations = "SELECT * " +
-								  "FROM site " +
-								  "JOIN campground ON site.campground_id = campground.campground_id " +
-								  "WHERE campground.campground_id = ? AND site.site_id NOT IN(SELECT site.site_id " +
-								  "FROM site JOIN reservation ON site.site_id = reservation.site_id " + 
-								  "WHERE " + fromDate + " >= reservation.from_date " +
-								  "AND " + toDate + " <= reservation.to_date) LIMIT 5;";
-		SqlRowSet results = jdbcTemplate.queryForRowSet(sqlReturnAllReservations, currCampground.getCampgroundId());
+								  		 "FROM reservation " +
+								  		 "WHERE reservation_id = ?;";
+		SqlRowSet results = jdbcTemplate.queryForRowSet(sqlReturnAllReservations, reservationId);
 		int counter = 1;
 		while (results.next()) {
 			Reservation temp = mapRowToReservation(results);
@@ -55,10 +51,10 @@ public class JDBCReservationDAO implements ReservationDAO {
 		return reservationsMap;
 	}
 	
-	public void createReservation(Site userSite, String reservationName, String fromDate, String toDate) {
+	public void createReservation(Site userSite, int reservationId, String reservationName, String fromDate, String toDate) {
 		String sqlCreateReservation = "INSERT INTO reservation " +
-									 "		(site_id, name, from_date, to_date, create_date) " +
-									 "VALUES(" + userSite.getSiteId() + ", " + reservationName + ", " +
+									 "		(reservation_id, site_id, name, from_date, to_date, create_date) " +
+									 "VALUES(" + reservationId + ", " + userSite.getSiteId() + ", " + reservationName + ", " +
 									 fromDate + ", " + toDate + ", CURRENT_TIMESTAMP);";
 		jdbcTemplate.update(sqlCreateReservation);
 	}

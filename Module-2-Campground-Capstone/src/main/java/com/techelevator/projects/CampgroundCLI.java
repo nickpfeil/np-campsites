@@ -1,11 +1,11 @@
 package com.techelevator.projects;
 
-import java.io.File;
 import java.util.TreeMap;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import java.math.BigDecimal;
-import java.security.PrivilegedActionException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Scanner;
 
@@ -127,29 +127,53 @@ public class CampgroundCLI {
 	
 	private void handleReservation(String userChoice) {
 		String reservationHeading = String.format("%1$-23s %2$-15s %3$-15s %4$-15s %5$-15s %6$-15s", "Site No.", "Max Occup.", "Accessible?", "Max RV Length", "Utility", "Cost");
-		String fromDate;
-		String toDate;
+
 		System.out.print("What is the arrival date (YYYY-MM-DD)? >> ");
-		fromDate = "'" + userInput.next() + "'";
+		String fromDateS = userInput.next();
+		int arrivalMonth = Integer.parseInt(fromDateS.substring(5, 7));
+		
+		LocalDate localArrivalDate = LocalDate.parse(fromDateS);
 		System.out.print("What is the departure date (YYYY-MM-DD)? >> ");
-		toDate = "'" + userInput.next() + "'";
-		sitesMap = siteDAO.getAvailableSites(campgroundsMap.get(Integer.parseInt(userChoice)).getCampgroundId(), fromDate, toDate);
-		if(sitesMap.size() > 0) {
-			System.out.println("\nResults Matching Your Search Criteria:");
-			BigDecimal cost = campgroundsMap.get(Integer.parseInt(userChoice)).getDailyFee();
-			System.out.println(reservationHeading);
-			for(int siteNum : sitesMap.keySet()) {
-				//////////////////////////////////
-				System.out.println(sitesMap.get(siteNum).toString(cost));
+		String toDateS = userInput.next();
+		int departureMonth = Integer.parseInt(toDateS.substring(5, 7));
+		
+		LocalDate localDepartureDate = LocalDate.parse(toDateS);
+		toDateS = "'" + toDateS + "'";
+		fromDateS = "'" + fromDateS + "'";
+		
+		long daysBetween = ChronoUnit.DAYS.between(localArrivalDate, localDepartureDate);
+		int choice = Integer.parseInt(userChoice);
+		BigDecimal totalCost = new BigDecimal(daysBetween).multiply(campgroundsMap.get(choice).getDailyFee());
+
+		if (campgroundsMap.get(choice).getOpenFromMm() < arrivalMonth
+				&& campgroundsMap.get(choice).getOpenFromMm() < departureMonth
+				&& campgroundsMap.get(choice).getOpenToMm() > arrivalMonth
+				&& campgroundsMap.get(choice).getOpenToMm() > departureMonth) {
+			sitesMap = siteDAO.getAvailableSites(campgroundsMap.get(Integer.parseInt(userChoice)).getCampgroundId(),
+					fromDateS, toDateS);
+			if (sitesMap.size() > 0) {
+				System.out.println("\nResults Matching Your Search Criteria:");
+				System.out.println(reservationHeading);
+
+				for (int siteNum : sitesMap.keySet()) {
+					System.out.println(sitesMap.get(siteNum).toString(totalCost));
+				}
+
+				System.out.print("Which site should be reserved (enter 0 to cancel)? >> ");
+				String siteToReserve = userInput.next();
+				System.out.print("What name should the reservation be made under? >> ");
+				String reservationName = "'" + userInput.next() + "'";
+				reservationDAO.createReservation(sitesMap.get(Integer.parseInt(siteToReserve)), lastReservationId + 1,
+						reservationName, fromDateS, toDateS);
+				populateReservationsMap();
+				lastReservationId = reservationsMap.lastKey();
+				System.out
+						.println("\nReservation for " + reservationName + " with confirmation id " + lastReservationId);
+				return;
+			} else {
+				System.out.println("You Franked it up!\n");
+				return;
 			}
-			System.out.print("Which site should be reserved (enter 0 to cancel)? >> ");
-			String siteToReserve = userInput.next();
-			System.out.print("What name should the reservation be made under? >> ");
-			String reservationName = "'" + userInput.next() + "'";
-			reservationDAO.createReservation(sitesMap.get(Integer.parseInt(siteToReserve)), reservationName, fromDate, toDate);
-			lastReservationId = reservationsMap.lastKey();
-			System.out.println("Reservation for " + reservationName + " with confirmation id " + lastReservationId);
-			return;
 		}
 	}
 	
@@ -189,6 +213,28 @@ public class CampgroundCLI {
 		System.out.println("words");
 	}
 	
+	private void reservationMenu() {
+		while (true) {
+			System.out.println("\n*** Search Reservations ***");
+			System.out.print("Please enter reservation id or (Q) to quit: ");
+			String userId = userInput.next();
+			int reservationId = Integer.parseInt(userId);
+			if (userId.toUpperCase().equals("Q")) {
+				return;
+			} else if (reservationsMap.containsKey(reservationId)) {
+				TreeMap<Integer, Reservation> userReservations = reservationDAO.searchAllReservations(reservationId);
+
+				for (int siteId : userReservations.keySet()) {
+					String reservationHeading = String.format("%1$-20s %2$-15s %3$-15s %4$-15s %5$-15s %6$-15s",
+							"Reservation ID", "Site ID", "Name", "From Date", "To Date", "Date Created");
+					System.out.println(reservationHeading);
+					System.out.println(userReservations.get(siteId).toString());
+				}
+			} else {
+				System.out.println("Not valid reservation code");
+			}
+		}
+	}
 //	private void printHeading(String headingText) {
 //		System.out.println("\n"+headingText);
 //		for(int i = 0; i < headingText.length(); i++) {
@@ -217,7 +263,7 @@ public class CampgroundCLI {
 			if (choice.equals(CAMPGROUND_MENU_OPTION_VIEW)) {
 				campgroundsMenu(userChoice);
 			} else if (choice.equals(CAMPGROUND_MENU_OPTION_SEARCH_RESERVATION)) {
-				// search reservations
+				reservationMenu();
 			} else if (choice.equals(CAMPGROUND_OPTION_RETURN_TO_MAIN)) {
 				//return to previous menu
 				return;

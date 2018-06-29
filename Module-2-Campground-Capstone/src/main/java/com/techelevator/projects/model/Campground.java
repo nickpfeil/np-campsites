@@ -8,8 +8,8 @@ public class Campground {
 	private long campgroundId;
 	private long parkId;
 	private String name;
-	private String openFromMm;
-	private String openToMm;
+	private int openFromMm;
+	private int openToMm;
 	private BigDecimal dailyFee;
 	
 	
@@ -37,19 +37,19 @@ public class Campground {
 		this.name = name;
 	}
 	
-	public String getOpenFromMm() {
+	public int getOpenFromMm() {
 		return openFromMm;
 	}
 	
-	public void setOpenFromMm(String openFromMm) {
-		this.openFromMm = openFromMm;
+	public void setOpenFromMm(int i) {
+		this.openFromMm = i;
 	}
 	
-	public String getOpenToMm() {
+	public int getOpenToMm() {
 		return openToMm;
 	}
 	
-	public void setOpenToMm(String openToMm) {
+	public void setOpenToMm(int openToMm) {
 		this.openToMm = openToMm;
 	}
 	
@@ -63,8 +63,8 @@ public class Campground {
 	
 	@Override
 	public String toString() {
-		return String.format("%1$-20s %2$-15s %3$-15s %4$-15s" , this.getName() , this.numberMonthToMonthName(Integer.parseInt(this.getOpenFromMm())) , 
-															    this.numberMonthToMonthName(Integer.parseInt(this.getOpenToMm())), "$" + this.getDailyFee() + "0");
+		return String.format("%1$-20s %2$-15s %3$-15s %4$-15s" , this.getName() , this.numberMonthToMonthName(this.getOpenFromMm()) , 
+															    this.numberMonthToMonthName(this.getOpenToMm()), "$" + this.getDailyFee() + "0");
 	}
 	
 	public String numberMonthToMonthName(int monthNum) {

@@ -4,6 +4,7 @@ import java.util.TreeMap;
 
 public interface SiteDAO {
 
-	TreeMap<Integer, Site> getAvailableSites(Long campgroundId, String fromDate, String toDate);
+	public TreeMap<Integer, Site> getAvailableSites(Long campgroundId, String fromDate, String toDate);
+	public boolean checkSiteOccupancy(Site currSite, String fromDate, String toDate);
 
 }

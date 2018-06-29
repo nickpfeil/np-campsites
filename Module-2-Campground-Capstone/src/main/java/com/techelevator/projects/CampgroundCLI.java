@@ -22,8 +22,10 @@ public class CampgroundCLI {
 	
 	private TreeMap<Integer, Park> parksMap = new TreeMap<Integer, Park>();
 	private TreeMap<Integer, Campground> campgroundsMap = new TreeMap<Integer, Campground>();
+	private TreeMap<Integer, Reservation> availableReservationsMap = new TreeMap<Integer, Reservation>();
 	private TreeMap<Integer, Reservation> reservationsMap = new TreeMap<Integer, Reservation>();
 	private TreeMap<Integer, Site> sitesMap = new TreeMap<Integer, Site>();
+	private int lastReservationId;
 
 	Scanner userInput = new Scanner(System.in);
 	
@@ -102,10 +104,6 @@ public class CampgroundCLI {
 	
 	private void searchAvailableReservations() {
 		String campgroundHeading = String.format("%1$-23s %2$-15s %3$-15s %4$-15s", "   Name", "Open", "Close", "Daily Fee");
-		String reservationHeading = String.format("%1$-23s %2$-15s %3$-15s %4$-15s %5$-15s %6$-15s", "Site No.", "Max Occup.", "Accessible?", "Max RV Length", "Utility", "Cost");
-		Long campgroundSelection;
-		String fromDate;
-		String toDate;
 		while(true) {
 			System.out.println("\n*** Search for Campground Reservation ***\n");
 			if(campgroundsMap.size() > 0) {
@@ -122,28 +120,42 @@ public class CampgroundCLI {
 			} else  if (Integer.parseInt(userChoice) > campgroundsMap.size()) {
 				System.out.println("Not Valid Input\n");
 			} else {
-				campgroundSelection = Long.parseLong(userChoice);
-				System.out.print("What is the arrival date (YYYY-MM-DD)? >> ");
-				fromDate = "'" + userInput.next() + "'";
-				System.out.print("What is the departure date (YYYY-MM-DD)? >> ");
-				toDate = "'" + userInput.next() + "'";
-				System.out.println("\nResults Matching Your Search Criteria:");
-				
-				BigDecimal cost = campgroundsMap.get(Integer.parseInt(userChoice)).getDailyFee();
-				sitesMap = siteDAO.getAvailableSites(campgroundSelection, fromDate, toDate);
-				
-				System.out.println(reservationHeading);
-				for (int site_num : sitesMap.keySet()) {
-					System.out.println(sitesMap.get(site_num).toString(cost));
-				}
-				// which site... fix above^^ (formatting and needs to get site info not campground info^
-				// returns an error after dates are entered, sql appears to be bad
+				handleReservation(userChoice);
 			}
+		}
+	}
+	
+	private void handleReservation(String userChoice) {
+		String reservationHeading = String.format("%1$-23s %2$-15s %3$-15s %4$-15s %5$-15s %6$-15s", "Site No.", "Max Occup.", "Accessible?", "Max RV Length", "Utility", "Cost");
+		String fromDate;
+		String toDate;
+		System.out.print("What is the arrival date (YYYY-MM-DD)? >> ");
+		fromDate = "'" + userInput.next() + "'";
+		System.out.print("What is the departure date (YYYY-MM-DD)? >> ");
+		toDate = "'" + userInput.next() + "'";
+		sitesMap = siteDAO.getAvailableSites(campgroundsMap.get(Integer.parseInt(userChoice)).getCampgroundId(), fromDate, toDate);
+		if(sitesMap.size() > 0) {
+			System.out.println("\nResults Matching Your Search Criteria:");
+			BigDecimal cost = campgroundsMap.get(Integer.parseInt(userChoice)).getDailyFee();
+			System.out.println(reservationHeading);
+			for(int siteNum : sitesMap.keySet()) {
+				//////////////////////////////////
+				System.out.println(sitesMap.get(siteNum).toString(cost));
+			}
+			System.out.print("Which site should be reserved (enter 0 to cancel)? >> ");
+			String siteToReserve = userInput.next();
+			System.out.print("What name should the reservation be made under? >> ");
+			String reservationName = "'" + userInput.next() + "'";
+			reservationDAO.createReservation(sitesMap.get(Integer.parseInt(siteToReserve)), reservationName, fromDate, toDate);
+			lastReservationId = reservationsMap.lastKey();
+			System.out.println("Reservation for " + reservationName + " with confirmation id " + lastReservationId);
+			return;
 		}
 	}
 	
 	private void handleParks() {
 		parksMap = parkDAO.getAllParks();
+		populateReservationsMap();
 		
 		while (true) {
 			System.out.println("\nPlease select a Park");
@@ -168,17 +180,22 @@ public class CampgroundCLI {
 		}
 	}
 	
+	private void populateReservationsMap() {
+		reservationsMap = reservationDAO.getAllReservations();
+		lastReservationId = reservationsMap.lastKey();
+	}
+	
 	private void displayApplicationBanner() {
 		System.out.println("words");
 	}
 	
-	private void printHeading(String headingText) {
-		System.out.println("\n"+headingText);
-		for(int i = 0; i < headingText.length(); i++) {
-			System.out.print("-");
-		}
-		System.out.println();
-	}
+//	private void printHeading(String headingText) {
+//		System.out.println("\n"+headingText);
+//		for(int i = 0; i < headingText.length(); i++) {
+//			System.out.print("-");
+//		}
+//		System.out.println();
+//	}
 	
 	private void parkMenu(Park userChoice) {
 		Menu menu = new Menu(System.in, System.out);

@@ -1,5 +1,6 @@
 package com.techelevator.projects.model;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 public class Reservation {
@@ -91,4 +92,9 @@ public class Reservation {
 		}
 		return null;
 	}
+	
+//	public String toString(BigDecimal cost) {
+//		return String.format("%1$-20s %2$-15s %3$-15s %4$-15s %5$-15s %6$-15s" , this.getSiteId(), this.getMaxOccupancy(), this.isAccesible()
+//																			  , this.getMaxRvLength(), this.isUtilities(), "$" + cost);
+//	}
 }

@@ -1,5 +1,6 @@
 package com.techelevator.projects.jdbc;
 
+import java.util.Date;
 import java.util.TreeMap;
 
 import javax.sql.DataSource;
@@ -20,15 +21,15 @@ public class JDBCReservationDAO implements ReservationDAO {
 		this.jdbcTemplate = new JdbcTemplate(dataSource);
 	}
 	
-	public TreeMap<Integer, Reservation> getAvailableReservations(Campground currCampground) {
+	public TreeMap<Integer, Reservation> getAvailableReservations(Campground currCampground, String fromDate, String toDate) {
 		TreeMap<Integer, Reservation> reservationsMap = new TreeMap<Integer, Reservation>();
 		String sqlReturnAllReservations = "SELECT * " +
 								  "FROM reservation " +
-								  "JOIN site ON reservation.site_id = site.side_id " +
+								  "JOIN site ON reservation.site_id = site.site_id " +
 								  "JOIN campground ON site.campground_id = campground.campground_id " +
 								  "WHERE campground.campground_id = ? AND reservation.from_date > ? AND reservation.to_date < ? " +
 								  "ORDER BY reservation.from_date;";
-		SqlRowSet results = jdbcTemplate.queryForRowSet(sqlReturnAllReservations, currCampground.getCampgroundId());
+		SqlRowSet results = jdbcTemplate.queryForRowSet(sqlReturnAllReservations, currCampground.getCampgroundId(), fromDate, toDate);
 		int counter = 1;
 		while (results.next()) {
 			Reservation temp = mapRowToReservation(results);

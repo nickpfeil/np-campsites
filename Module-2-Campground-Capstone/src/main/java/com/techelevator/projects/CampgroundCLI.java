@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.security.PrivilegedActionException;
+import java.util.Date;
 import java.util.Scanner;
 
 import javax.sql.DataSource;
@@ -99,7 +100,44 @@ public class CampgroundCLI {
 	}
 	
 	private void searchAvailableReservations() {
-//		reservationsMap = reservationDAO.getAvailableReservations(currCampground);
+		String campgroundHeading = String.format("%1$-23s %2$-15s %3$-15s %4$-15s", "   Name", "Open", "Close", "Daily Fee");
+		String reservationHeading = String.format("%1$-23s %2$-15s %3$-15s %4$-15s %5$-15s %6$-15s", "Site No.", "Max Occup.", "Accessible?", "Max RV Length", "Utility", "Cost");
+		int campgroundSelection;
+		String fromDate;
+		String toDate;
+		while(true) {
+			System.out.println("\n*** Search for Campground Reservation ***\n");
+			if(campgroundsMap.size() > 0) {
+				System.out.println(campgroundHeading);
+			}
+			for(int i = 1; i <= campgroundsMap.size(); ++i) {
+				System.out.print("#" + i + " ");
+				System.out.println(campgroundsMap.get(i).toString());
+			}
+			System.out.println("\nWhich campground (enter 0 to cancel)? >> ");
+			String userChoice = userInput.next();
+			if (userChoice.equals("0")) {
+				return;
+			} else  if (Integer.parseInt(userChoice) > campgroundsMap.size()) {
+				System.out.println("Not Valid Input\n");
+			} else {
+				campgroundSelection = Integer.parseInt(userChoice);
+				System.out.println("What is the arrival date (YYYY-MM-DD)? >> ");
+				fromDate = "'" + userInput.next() + "'";
+				System.out.println("What is the departure date (YYYY-MM-DD)? >> ");
+				toDate = "'" + userInput.next() + "'";
+				reservationsMap = reservationDAO.getAvailableReservations(campgroundsMap.get(campgroundSelection), fromDate, toDate);
+				System.out.println("\nResults Matching Your Search Criteria:");
+				if(reservationsMap.size() > 0) {
+					System.out.println(reservationHeading);
+				}
+				for(int availableReservation : reservationsMap.keySet()) {
+					System.out.println(reservationsMap.get(availableReservation).getSiteId());
+				}
+				// which site... fix above^^ (formatting and needs to get site info not campground info^
+				// returns an error after dates are entered, sql appears to be bad
+			}
+		}
 	}
 	
 	private void handleParks() {

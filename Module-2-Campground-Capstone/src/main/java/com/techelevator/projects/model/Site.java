@@ -1,5 +1,7 @@
 package com.techelevator.projects.model;
 
+import java.math.BigDecimal;
+
 public class Site {
 	
 	private long siteId;
@@ -65,5 +67,10 @@ public class Site {
 	
 	public void setUtilities(boolean utilities) {
 		this.utilities = utilities;
+	}
+	
+	public String toString(BigDecimal cost) {
+		return String.format("%1$-20s %2$-15s %3$-15s %4$-15s %5$-15s %6$-15s" , this.getSiteNumber(), this.getMaxOccupancy(), this.isAccesible()
+																			  , this.getMaxRvLength(), this.isUtilities(), "$" + cost);
 	}
 }

@@ -23,6 +23,7 @@ public class CampgroundCLI {
 	private TreeMap<Integer, Park> parksMap = new TreeMap<Integer, Park>();
 	private TreeMap<Integer, Campground> campgroundsMap = new TreeMap<Integer, Campground>();
 	private TreeMap<Integer, Reservation> reservationsMap = new TreeMap<Integer, Reservation>();
+	private TreeMap<Integer, Site> sitesMap = new TreeMap<Integer, Site>();
 
 	Scanner userInput = new Scanner(System.in);
 	
@@ -102,7 +103,7 @@ public class CampgroundCLI {
 	private void searchAvailableReservations() {
 		String campgroundHeading = String.format("%1$-23s %2$-15s %3$-15s %4$-15s", "   Name", "Open", "Close", "Daily Fee");
 		String reservationHeading = String.format("%1$-23s %2$-15s %3$-15s %4$-15s %5$-15s %6$-15s", "Site No.", "Max Occup.", "Accessible?", "Max RV Length", "Utility", "Cost");
-		int campgroundSelection;
+		Long campgroundSelection;
 		String fromDate;
 		String toDate;
 		while(true) {
@@ -114,25 +115,26 @@ public class CampgroundCLI {
 				System.out.print("#" + i + " ");
 				System.out.println(campgroundsMap.get(i).toString());
 			}
-			System.out.println("\nWhich campground (enter 0 to cancel)? >> ");
+			System.out.print("\nWhich campground (enter 0 to cancel)? >> ");
 			String userChoice = userInput.next();
 			if (userChoice.equals("0")) {
 				return;
 			} else  if (Integer.parseInt(userChoice) > campgroundsMap.size()) {
 				System.out.println("Not Valid Input\n");
 			} else {
-				campgroundSelection = Integer.parseInt(userChoice);
-				System.out.println("What is the arrival date (YYYY-MM-DD)? >> ");
+				campgroundSelection = Long.parseLong(userChoice);
+				System.out.print("What is the arrival date (YYYY-MM-DD)? >> ");
 				fromDate = "'" + userInput.next() + "'";
-				System.out.println("What is the departure date (YYYY-MM-DD)? >> ");
+				System.out.print("What is the departure date (YYYY-MM-DD)? >> ");
 				toDate = "'" + userInput.next() + "'";
-				reservationsMap = reservationDAO.getAvailableReservations(campgroundsMap.get(campgroundSelection), fromDate, toDate);
 				System.out.println("\nResults Matching Your Search Criteria:");
-				if(reservationsMap.size() > 0) {
-					System.out.println(reservationHeading);
-				}
-				for(int availableReservation : reservationsMap.keySet()) {
-					System.out.println(reservationsMap.get(availableReservation).getSiteId());
+				
+				BigDecimal cost = campgroundsMap.get(Integer.parseInt(userChoice)).getDailyFee();
+				sitesMap = siteDAO.getAvailableSites(campgroundSelection, fromDate, toDate);
+				
+				System.out.println(reservationHeading);
+				for (int site_num : sitesMap.keySet()) {
+					System.out.println(sitesMap.get(site_num).toString(cost));
 				}
 				// which site... fix above^^ (formatting and needs to get site info not campground info^
 				// returns an error after dates are entered, sql appears to be bad

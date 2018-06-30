@@ -2,11 +2,8 @@ package com.techelevator.projects;
 
 import java.util.TreeMap;
 import java.math.BigDecimal;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import java.util.Scanner;
 
 import javax.sql.DataSource;
@@ -22,7 +19,6 @@ public class CampgroundCLI {
 	
 	private TreeMap<Integer, Park> parksMap = new TreeMap<Integer, Park>();
 	private TreeMap<Integer, Campground> campgroundsMap = new TreeMap<Integer, Campground>();
-	private TreeMap<Integer, Reservation> availableReservationsMap = new TreeMap<Integer, Reservation>();
 	private TreeMap<Integer, Reservation> reservationsMap = new TreeMap<Integer, Reservation>();
 	private TreeMap<Integer, Site> sitesMap = new TreeMap<Integer, Site>();
 	private int lastReservationId;
@@ -36,16 +32,17 @@ public class CampgroundCLI {
 																		CAMPGROUND_MENU_OPTION_SEARCH_RESERVATION, 															
 																		CAMPGROUND_OPTION_RETURN_TO_MAIN};
 	
-	private static final String VIEW_CAMPGROUNDS_MENU_OPTION_AVAILABLE_RESERVATIONS = "Search for Available Reservation";
-	private static final String VIEW_CAMPGROUNDS_OPTION_RETURN_TO_PREVIOUS = "Return to Previous Screen";
-	private static final String[] VIEW_CAMPGROUNDS_MENU_OPTIONS = new String[] { VIEW_CAMPGROUNDS_MENU_OPTION_AVAILABLE_RESERVATIONS, 
-																			   VIEW_CAMPGROUNDS_OPTION_RETURN_TO_PREVIOUS};
-	
-	private Menu menu;
 	private CampgroundDAO campgroundDAO;
 	private ParkDAO parkDAO;
 	private ReservationDAO reservationDAO;
 	private SiteDAO siteDAO;
+	
+	public CampgroundCLI(DataSource dataSource) {
+		parkDAO = new JDBCParkDAO(dataSource);
+		campgroundDAO = new JDBCCampgroundDAO(dataSource);
+		reservationDAO = new JDBCReservationDAO(dataSource);
+		siteDAO = new JDBCSiteDAO(dataSource);
+	}
 
 	public static void main(String[] args) {
 		BasicDataSource dataSource = new BasicDataSource();
@@ -56,17 +53,64 @@ public class CampgroundCLI {
 		CampgroundCLI application = new CampgroundCLI(dataSource);
 		application.run();
 	}
-
-	public CampgroundCLI(DataSource dataSource) {
-		parkDAO = new JDBCParkDAO(dataSource);
-		campgroundDAO = new JDBCCampgroundDAO(dataSource);
-		reservationDAO = new JDBCReservationDAO(dataSource);
-		siteDAO = new JDBCSiteDAO(dataSource);
-	}
 	
 	public void run() {
 		displayApplicationBanner();
 		handleParks();
+	}
+	
+	private void handleParks() {
+		parksMap = parkDAO.getAllParks();
+		populateReservationsMap();
+		
+		while (true) {
+			System.out.println("\nPlease select a Park");
+			
+			for (int i = 1; i <= parksMap.size(); ++i) {
+				System.out.println(i + ") " + parksMap.get(i).getName());
+			}
+			System.out.println("Q); Quit");
+			
+			System.out.print("Enter number or (Q)uit: ");
+			String userChoice = userInput.next();
+
+			if (userChoice.toUpperCase().equals("Q")) {
+				userInput.close();
+				System.exit(0);
+			} else  if (parksMap.containsKey(Integer.parseInt(userChoice))) {
+				parkMenu(parksMap.get(Integer.parseInt(userChoice)));
+			} else {
+				System.out.println("Not Valid Input\n");
+			}
+
+		}
+	}
+	
+	private void parkMenu(Park userChoice) {
+		Menu menu = new Menu(System.in, System.out);
+
+		while (true) { 
+			System.out.println();
+			System.out.println("*** Park Information Screen ***\n");
+			System.out.println(userChoice.getName() + " National Park");
+			System.out.println("-------------------------------");
+			System.out.println("Location:         " + userChoice.getLocation());
+			System.out.println("Established:      " + userChoice.getEstablishDate().toString());
+			System.out.println("Area:             " + userChoice.getArea());
+			System.out.println("Annual Visitors:  " + userChoice.getVisitors());
+			System.out.println();
+			System.out.println(userChoice.getDescription());
+			
+			String choice = (String) menu.getChoiceFromOptions(CAMPGROUND_MENU_OPTIONS); // with [] of options
+
+			if (choice.equals(CAMPGROUND_MENU_OPTION_VIEW)) {
+				campgroundsMenu(userChoice);
+			} else if (choice.equals(CAMPGROUND_MENU_OPTION_SEARCH_RESERVATION)) {
+				reservationMenu();
+			} else if (choice.equals(CAMPGROUND_OPTION_RETURN_TO_MAIN)) {
+				return;
+			}
+		}
 	}
 	
 	private void campgroundsMenu(Park currPark) {
@@ -98,6 +142,28 @@ public class CampgroundCLI {
 				searchAvailableReservations();
 			} else {
 				System.out.println("Not Valid Input\n");
+			}
+		}
+	}
+	
+	private void reservationMenu() {
+		while (true) {
+			System.out.println("\n*** Search Reservations ***");
+			System.out.print("Please enter reservation id or (Q) to quit: ");
+			String reservationId = userInput.next();
+			if (reservationId.toUpperCase().equals("Q")) {
+				return;
+			} else if (reservationsMap.containsKey(Integer.parseInt(reservationId))) {
+				TreeMap<Integer, Reservation> userReservations = reservationDAO.searchAllReservations(Integer.parseInt(reservationId));
+
+				for (int siteId : userReservations.keySet()) {
+					String reservationHeading = String.format("%1$-20s %2$-15s %3$-15s %4$-15s %5$-15s %6$-15s",
+							"Reservation ID", "Site ID", "Name", "From Date", "To Date", "Date Created");
+					System.out.println(reservationHeading);
+					System.out.println(userReservations.get(siteId).toString());
+				}
+			} else {
+				System.out.println("Not valid reservation code");
 			}
 		}
 	}
@@ -161,8 +227,11 @@ public class CampgroundCLI {
 
 				System.out.print("Which site should be reserved (enter 0 to cancel)? >> ");
 				String siteToReserve = userInput.next();
-				System.out.print("What name should the reservation be made under? >> ");
-				String reservationName = "'" + userInput.next() + "'";
+				System.out.print("What first name should the reservation be made under? >> ");
+				String firstName = userInput.next() + " ";
+				System.out.print("What last name should the reservation be made under? >> ");
+				String lastName = userInput.next();
+				String reservationName = "'" + firstName + lastName + "'";
 				reservationDAO.createReservation(sitesMap.get(Integer.parseInt(siteToReserve)), lastReservationId + 1,
 						reservationName, fromDateS, toDateS);
 				populateReservationsMap();
@@ -171,36 +240,9 @@ public class CampgroundCLI {
 						.println("\nReservation for " + reservationName + " with confirmation id " + lastReservationId);
 				return;
 			} else {
-				System.out.println("You Franked it up!\n");
+				System.out.println("No Available Sites Matching Your Criteria\n");
 				return;
 			}
-		}
-	}
-	
-	private void handleParks() {
-		parksMap = parkDAO.getAllParks();
-		populateReservationsMap();
-		
-		while (true) {
-			System.out.println("\nPlease select a Park");
-			
-			for (int i = 1; i <= parksMap.size(); ++i) {
-				System.out.println(i + ") " + parksMap.get(i).getName());
-			}
-			System.out.println("Q); Quit");
-			
-			System.out.print("Enter number or (Q)uit: ");
-			String userChoice = userInput.next();
-
-			if (userChoice.toUpperCase().equals("Q")) {
-				userInput.close();
-				System.exit(0);
-			} else  if (parksMap.containsKey(Integer.parseInt(userChoice))) {
-				parkMenu(parksMap.get(Integer.parseInt(userChoice)));
-			} else {
-				System.out.println("Not Valid Input\n");
-			}
-
 		}
 	}
 	
@@ -210,64 +252,11 @@ public class CampgroundCLI {
 	}
 	
 	private void displayApplicationBanner() {
-		System.out.println("words");
-	}
-	
-	private void reservationMenu() {
-		while (true) {
-			System.out.println("\n*** Search Reservations ***");
-			System.out.print("Please enter reservation id or (Q) to quit: ");
-			String userId = userInput.next();
-			int reservationId = Integer.parseInt(userId);
-			if (userId.toUpperCase().equals("Q")) {
-				return;
-			} else if (reservationsMap.containsKey(reservationId)) {
-				TreeMap<Integer, Reservation> userReservations = reservationDAO.searchAllReservations(reservationId);
-
-				for (int siteId : userReservations.keySet()) {
-					String reservationHeading = String.format("%1$-20s %2$-15s %3$-15s %4$-15s %5$-15s %6$-15s",
-							"Reservation ID", "Site ID", "Name", "From Date", "To Date", "Date Created");
-					System.out.println(reservationHeading);
-					System.out.println(userReservations.get(siteId).toString());
-				}
-			} else {
-				System.out.println("Not valid reservation code");
-			}
-		}
-	}
-//	private void printHeading(String headingText) {
-//		System.out.println("\n"+headingText);
-//		for(int i = 0; i < headingText.length(); i++) {
-//			System.out.print("-");
-//		}
-//		System.out.println();
-//	}
-	
-	private void parkMenu(Park userChoice) {
-		Menu menu = new Menu(System.in, System.out);
-
-		while (true) { 
-			System.out.println();
-			System.out.println("*** Park Information Screen ***\n");
-			System.out.println(userChoice.getName() + " National Park");
-			System.out.println("-------------------------------");
-			System.out.println("Location:         " + userChoice.getLocation());
-			System.out.println("Established:      " + userChoice.getEstablishDate().toString());
-			System.out.println("Area:             " + userChoice.getArea());
-			System.out.println("Annual Visitors:  " + userChoice.getVisitors());
-			System.out.println();
-			System.out.println(userChoice.getDescription());
-			
-			String choice = (String) menu.getChoiceFromOptions(CAMPGROUND_MENU_OPTIONS); // with [] of options
-
-			if (choice.equals(CAMPGROUND_MENU_OPTION_VIEW)) {
-				campgroundsMenu(userChoice);
-			} else if (choice.equals(CAMPGROUND_MENU_OPTION_SEARCH_RESERVATION)) {
-				reservationMenu();
-			} else if (choice.equals(CAMPGROUND_OPTION_RETURN_TO_MAIN)) {
-				//return to previous menu
-				return;
-			}
-		}
+		System.out.println("   __    ___    _    _   ___   ___    ___    __   _    _  _  _ __   ");
+		System.out.println("  /  \\  /   \\  | \\  / | |   \\ /   \\  /    \\ /  \\  |    | |\\ || |  \\  ");
+		System.out.println(" |     |     | |  \\/  | |    ||      |____/|    | |    | | \\|| |   \\ ");
+		System.out.println(" |     |-----| |      | |___/ |   __ |\\    |    | |    | |   | |    |");
+		System.out.println(" |     |     | |      | |     |    | | \\   |    | |    | |   | |   / ");
+		System.out.println(" \\___/ |     | |      | |     \\___/  |  \\  \\____/ \\____/ |   | |__/  ");
 	}
 }

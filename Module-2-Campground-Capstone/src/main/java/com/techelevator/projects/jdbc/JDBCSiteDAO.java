@@ -27,7 +27,6 @@ public class JDBCSiteDAO implements SiteDAO {
 				  "FROM site JOIN reservation ON site.site_id = reservation.site_id " + 
 				  "WHERE " + fromDate + " >= reservation.from_date " +
 				  "AND " + toDate + " <= reservation.to_date) LIMIT 5;";
-		System.out.println(fromDate + " " + toDate);
 		SqlRowSet results = jdbcTemplate.queryForRowSet(sqlReturnAllSites, campgroundId);
 		while (results.next()) {
 			Site temp = mapRowToSite(results);

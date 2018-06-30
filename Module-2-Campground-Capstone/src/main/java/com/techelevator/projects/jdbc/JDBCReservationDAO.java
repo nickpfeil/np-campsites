@@ -1,6 +1,5 @@
 package com.techelevator.projects.jdbc;
 
-import java.util.Date;
 import java.util.TreeMap;
 
 import javax.sql.DataSource;
@@ -8,8 +7,6 @@ import javax.sql.DataSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 
-import com.techelevator.projects.model.Campground;
-import com.techelevator.projects.model.Park;
 import com.techelevator.projects.model.Reservation;
 import com.techelevator.projects.model.ReservationDAO;
 import com.techelevator.projects.model.Site;
